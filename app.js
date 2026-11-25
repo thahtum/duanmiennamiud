@@ -504,7 +504,7 @@
     el.innerHTML = `<div class="ov-stage"><img src="${esc(O.image)}" width="${W}" height="${H}" alt="Tổng mặt bằng ${esc(p.name)}" draggable="false"><div class="ov-tiles"></div><svg class="ov-text" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"></svg></div><div class="ov-pins"></div>
       <div class="mp-ctrl"><button data-z="in" title="Phóng to">+</button><button data-z="out" title="Thu nhỏ">−</button><button data-z="fit" title="Vừa khung">⤢</button><button data-z="fs" title="Toàn màn hình">⛶</button></div>`;
     const stage = $(".ov-stage", el), pins = $(".ov-pins", el), tilesEl = $(".ov-tiles", el), textEl = $(".ov-text", el);
-    let s = 1, tx = 0, ty = 0, minS = 0.1, maxS = O.tiles ? 24 : 6;
+    let s = 1, tx = 0, ty = 0, minS = 0.1, maxS = O.tiles ? 32 : 6;
     /* ô ảnh độ phân giải cao + lớp chữ vector khi phóng to */
     const TL = O.tiles, tileMade = {}, dpr = Math.min(window.devicePixelRatio || 1, 2);
     let textReady = !!window.TMB_TEXT, textLoading = false, grid = null, detailT = 0;
@@ -527,7 +527,6 @@
             im.style.cssText = `position:absolute;left:${i * span}px;top:${j * span}px;width:${span + 0.6}px;height:${span + 0.6}px`; box.appendChild(im);
           }
       });
-      if (r > 4.4) { drawLots(vx0, vy0, vx1, vy1); return; }
       if (!textReady) { if (!textLoading && O.text) { textLoading = true; const sc = document.createElement("script"); sc.src = O.text; sc.onload = () => { textReady = true; buildGrid(); detail(); }; document.head.appendChild(sc); } return; }
       if (!grid) buildGrid();
       const D = window.TMB_TEXT.d, C = window.TMB_TEXT.c, out = [];
@@ -536,27 +535,29 @@
           const L = grid[gx + "_" + gy]; if (!L) continue;
           for (const i of L) { const r = D[i]; if (r[2] * s < 5.5 || r[0] < vx0 - 50 || r[0] > vx1 + 10 || r[1] < vy0 - 10 || r[1] > vy1 + 50) continue; out.push(r); if (out.length > 3500) break; }
         }
-      textEl.innerHTML = out.map((r) => `<text x="${r[0]}" y="${r[1]}" font-size="${r[2]}" fill="${C[r[5]]}"${r[6] ? ' font-weight="700"' : ""}${r[3] ? ` transform="rotate(${r[3]} ${r[0]} ${r[1]})"` : ""}${r[4] > 0 ? ` textLength="${r[4]}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(r[7])}</text>`).join("");
+      textEl.innerHTML = lotLabels(vx0, vy0, vx1, vy1) + out.map((r) => `<text x="${r[0]}" y="${r[1]}" font-size="${r[2]}" fill="${C[r[5]]}"${r[6] ? ' font-weight="700"' : ""}${r[3] ? ` transform="rotate(${r[3]} ${r[0]} ${r[1]})"` : ""}${r[4] > 0 ? ` textLength="${r[4]}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(r[7])}</text>`).join("");
     };
     /* nhãn số lô + diện tích trên từng lô khi phóng to sâu */
     let lotGrid = null;
     const lotCol = (u) => (u.status === "ban" ? "#b23b3b" : u.status === "lock" || u.status === "lockdeal" ? "#6b4fb3" : u.price != null ? "#0b5d3b" : "#1d2421");
-    function drawLots(vx0, vy0, vx1, vy1) {
-      if (s < 13) { textEl.innerHTML = ""; return; }
-      if (!lotGrid) { lotGrid = {}; units.forEach((u) => { if (!u.tmbPos) return; const k = ((u.tmbPos[0] / 50) | 0) + "_" + ((u.tmbPos[1] / 50) | 0); (lotGrid[k] = lotGrid[k] || []).push(u); }); }
-      const showA = s >= 16, f1 = 0.58, f2 = 0.4, out = [];
+    let txtCodes = null;
+    function lotLabels(vx0, vy0, vx1, vy1) {
+      if (s < 13) return "";
+      if (!txtCodes) { txtCodes = new Set(); window.TMB_TEXT.d.forEach((r) => { if (/^[A-ZĐ]+\d*[A-Z]?-\d+$/.test(r[7])) txtCodes.add(r[7]); }); }
+      if (!lotGrid) { lotGrid = {}; units.forEach((u) => { if (!u.tmbPos || txtCodes.has(u.code)) return; const k = ((u.tmbPos[0] / 50) | 0) + "_" + ((u.tmbPos[1] / 50) | 0); (lotGrid[k] = lotGrid[k] || []).push(u); }); }
+      const showA = s >= 16, f1 = 0.42, f2 = 0.36, out = [];
       for (let gy = ((vy0 / 50) | 0) - 1; gy <= ((vy1 / 50) | 0) + 1; gy++)
         for (let gx = ((vx0 / 50) | 0) - 1; gx <= ((vx1 / 50) | 0) + 1; gx++) {
           const L = lotGrid[gx + "_" + gy]; if (!L) continue;
           for (const u of L) {
             const [x, y] = u.tmbPos; if (x < vx0 - 2 || x > vx1 + 2 || y < vy0 - 2 || y > vy1 + 2) continue;
-            const num = u.code.split("-").pop(), c = lotCol(u), b = u.price != null || u.status === "ban" ? ' font-weight="700"' : "";
+            const num = u.code, c = lotCol(u), b = u.price != null || u.status === "ban" ? ' font-weight="700"' : "";
             out.push(`<text x="${x}" y="${showA ? y - 0.05 : y + f1 * 0.35}" font-size="${f1}" fill="${c}"${b} text-anchor="middle" stroke="#fff" stroke-width="${f1 * 0.22}" paint-order="stroke">${esc(num)}</text>`);
             if (showA && u.land) out.push(`<text x="${x}" y="${y + f2 * 1.15}" font-size="${f2}" fill="${c}" text-anchor="middle" stroke="#fff" stroke-width="${f2 * 0.22}" paint-order="stroke">${String(Math.round(u.land * 10) / 10).replace(".", ",")}m²</text>`);
             if (out.length > 4000) break;
           }
         }
-      textEl.innerHTML = out.join("");
+      return out.join("");
     }
     const draw = () => {
       const cw = el.clientWidth, ch = el.clientHeight, R = cw < 600 ? 40 : 52;
