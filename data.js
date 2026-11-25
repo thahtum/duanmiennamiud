@@ -121,7 +121,7 @@ window.SITE = {
       faq: [["Đi từ trung tâm mất bao lâu?", "Hiện tại qua phà Bình Khánh khoảng 1h30–2h. Khi cầu Cần Giờ và đại lộ Rừng Sác hoàn thành, từ Quận 1 khoảng 45 phút; tuyến đường sắt tốc độ cao từ ga Bến Thành khoảng 13 phút."], ["Phân khu A có những loại sản phẩm nào?", "1.478 nhà liền kề (70–224 m²), 797 biệt thự song lập (157–452,5 m²) và 239 biệt thự đơn lập (259,5–725 m²)."], ["Sở hữu lâu dài không?", "Người Việt Nam sở hữu lâu dài; người nước ngoài tối đa 50 năm theo luật."], ["Giá bao nhiêu?", "Tham khảo từ 12,95 tỷ (gồm VAT), tùy vị trí, diện tích và chính sách từng đợt. Gửi mã căn để nhận báo giá chính xác."]],
       overview: {
         image: "img/gp-tmb.jpg", width: 3842, height: 2345,
-        tiles: { k: 1.5, size: 1024, levels: [{ dir: "img/tmb/m/", z: 3.125, cols: 8, rows: 5, min: 1.1 }, { dir: "img/tmb/h/", z: 6.25, cols: 16, rows: 10, min: 2.2 }] },   // ô ảnh nét cao khi phóng to
+        tiles: { k: 1.5, size: 1024, levels: [{ dir: "img/tmb/m/", z: 3.125, cols: 8, rows: 5, min: 1.1 }, { dir: "img/tmb/h/", z: 6.25, cols: 16, rows: 10, min: 2.2 }, { dir: "img/tmb/x/", z: 12.5, cols: 32, rows: 20, min: 4.4 }, { dir: "img/tmb/u/", z: 25, cols: 63, rows: 39, min: 9 }] },   // ô ảnh nét cao khi phóng to
         text: "tmb-text.js",                                                        // lớp chữ vector (mã lô, diện tích)
         note: "Tổng mặt bằng dự án Vinhomes Green Paradise (nguồn: TMB A0 251001 của chủ đầu tư)",
         // ma trận chuyển tọa độ mặt bằng Phân khu A -> ảnh tổng mặt bằng [a, b, c, d, e, f]: X = a*x + b*y + c, Y = d*x + e*y + f
