@@ -188,6 +188,7 @@
     if (!/^(\+?84|0)\d{9,10}$/.test(phone)) { msg.className = "form-msg show"; msg.textContent = "Số điện thoại chưa đúng (VD: 0912345678)."; return; }
     const text = `Đăng ký nhận bảng giá\nHọ tên: ${d.name}\nSĐT: ${phone}\nDự án: ${d.project || "Cần tư vấn"}\nLoại hình: ${d.type || "-"}\nNgân sách: ${d.budget || "-"}\nGhi chú: ${d.note || "-"}`;
     msg.className = "form-msg show";
+    const btn = $("[type=submit]", form); if (btn) { if (btn.disabled) return; btn.disabled = true; setTimeout(() => (btn.disabled = false), 8000); }
     if (B.leadWebhook) {
       try { await fetch(B.leadWebhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(Object.assign(d, { phone, time: new Date().toISOString(), page: location.href })) });
         msg.innerHTML = `✅ Đã gửi thông tin. ${esc(B.consultant)} sẽ liên hệ bạn trong ngày.`; form.reset(); return;
