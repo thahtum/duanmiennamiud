@@ -541,8 +541,27 @@
     let lotGrid = null;
     const lotCol = (u) => (u.status === "ban" ? "#b23b3b" : u.status === "lock" || u.status === "lockdeal" ? "#6b4fb3" : u.price != null ? "#0b5d3b" : "#1d2421");
     let txtCodes = null;
+    let missA = null;
+    function areaFill(vx0, vy0, vx1, vy1) {
+      if (!missA) {
+        missA = []; const D = window.TMB_TEXT.d, landBy = {}; units.forEach((u) => { if (u.land) landBy[u.code] = u.land; });
+        const A = {}; D.forEach((r) => { if (/m²/.test(r[7])) { const k = ((r[0] / 5) | 0) + "_" + ((r[1] / 5) | 0); (A[k] = A[k] || []).push(r); } });
+        D.forEach((r) => {
+          if (!/^[A-ZĐ]+\d*[A-Z]?-\d+$/.test(r[7]) || !landBy[r[7]]) return;
+          let near = false; const gx = (r[0] / 5) | 0, gy = (r[1] / 5) | 0;
+          for (let y = gy - 1; y <= gy + 1 && !near; y++) for (let x = gx - 1; x <= gx + 1 && !near; x++) (A[x + "_" + y] || []).forEach((q) => { if (Math.hypot(q[0] - r[0], q[1] - r[1]) < 1.2) near = true; });
+          if (near) return;
+          const t = (r[3] || 0) * Math.PI / 180, dy = r[2] * 1.35;
+          missA.push([r[0] - dy * Math.sin(t), r[1] + dy * Math.cos(t), r[2], r[3] || 0, String(Math.round(landBy[r[7]] * 10) / 10).replace(".", ",") + " m²"]);
+        });
+      }
+      if (0.489 * s < 5.5) return "";
+      return missA.filter((m) => m[0] > vx0 - 3 && m[0] < vx1 + 3 && m[1] > vy0 - 3 && m[1] < vy1 + 3)
+        .map((m) => `<text x="${m[0]}" y="${m[1]}" font-size="${m[2]}" fill="#000"${m[3] ? ` transform="rotate(${m[3]} ${m[0]} ${m[1]})"` : ""}>${m[4]}</text>`).join("");
+    }
     function lotLabels(vx0, vy0, vx1, vy1) {
-      if (s < 13) return "";
+      const af = areaFill(vx0, vy0, vx1, vy1);
+      if (s < 13) return af;
       if (!txtCodes) { txtCodes = new Set(); window.TMB_TEXT.d.forEach((r) => { if (/^[A-ZĐ]+\d*[A-Z]?-\d+$/.test(r[7])) txtCodes.add(r[7]); }); }
       if (!lotGrid) { lotGrid = {}; units.forEach((u) => { if (!u.tmbPos || txtCodes.has(u.code)) return; const k = ((u.tmbPos[0] / 50) | 0) + "_" + ((u.tmbPos[1] / 50) | 0); (lotGrid[k] = lotGrid[k] || []).push(u); }); }
       const showA = s >= 16, f1 = 0.42, f2 = 0.36, out = [];
@@ -557,7 +576,7 @@
             if (out.length > 4000) break;
           }
         }
-      return out.join("");
+      return af + out.join("");
     }
     const draw = () => {
       const cw = el.clientWidth, ch = el.clientHeight, R = cw < 600 ? 40 : 52;
