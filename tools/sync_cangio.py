@@ -35,14 +35,32 @@ def add(code, d):
 
 ws = sheet("CẦN GIỜ")
 if ws:
+    # Tìm cột theo tiêu đề (sheet hay bị chèn thêm cột); không thấy thì dùng vị trí cũ.
+    H = [str(c.value or "").strip().lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    def col(pred, default, start=0):
+        for i in range(start, len(H)):
+            if pred(H[i]): return i
+        return default
+    cC = col(lambda h: h.startswith("mã căn"), 2)
+    cT = col(lambda h: h.startswith("loại"), 3)
+    cF = col(lambda h: h.startswith("tcbg"), None)
+    cL = col(lambda h: h.startswith("dt đất"), 4)
+    cB = col(lambda h: h.startswith("dtxd"), cL + 1)
+    cP = col(lambda h: "chưa" in h and "vat" in h, cL + 3)
+    cTot = col(lambda h: h.startswith("giá gồm vat"), cP + 3)
+    cX = col(lambda h: h.startswith("xây tr"), cTot + 1)
+    cD = col(lambda h: h.startswith("đất tr"), cX + 4)
+    cG = cD + 4  # cột ghi CKTT / Giãn xây ngay sau "Tổng tiền đất"
     for r in ws.iter_rows(min_row=2):
-        v = [c.value for c in r] + [None] * 30
-        if not v[2]: continue
-        tc = str(v[20] or "").strip()
-        add(v[2], {"zone": str(v[1] or "").strip(), "type": TYPE.get(str(v[3]).strip(), v[3]), "land": num(v[4]), "build": num(v[5]),
-                   "pre": num(v[7]), "vat": num(v[8]), "kpbt": num(v[9]), "total": num(v[10]),
-                   "xd": [num(x) for x in v[11:15]], "dat": [num(x) for x in v[15:19]],
-                   "tcbg": tc or None, "gx": tc.lower().startswith("giãn"), "status": STAT.get(fill(r[2]), "con"), "src": "CG"})
+        v = [c.value for c in r] + [None] * 40
+        if not v[cC]: continue
+        tc = str(v[cG] or "").strip()
+        fin = str(v[cF] or "").strip() if cF is not None else ""
+        add(v[cC], {"zone": str(v[1] or "").strip(), "type": TYPE.get(str(v[cT]).strip(), v[cT]), "land": num(v[cL]), "build": num(v[cB]),
+                   "pre": num(v[cP]), "vat": num(v[cP + 1]), "kpbt": num(v[cP + 2]), "total": num(v[cTot]),
+                   "xd": [num(x) for x in v[cX:cX + 4]], "dat": [num(x) for x in v[cD:cD + 4]],
+                   "tcbg": tc or None, "fin": fin or None, "gx": tc.lower().startswith("giãn") or fin.lower().startswith("giãn"),
+                   "status": STAT.get(fill(r[cC]), "con"), "src": "CG"})
 ws = sheet("CẦN GIỜ GHC")
 if ws:
     for r in ws.iter_rows(min_row=4):

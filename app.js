@@ -198,13 +198,71 @@
     $("[data-copytext]", msg).onclick = () => copy(text);
   }
 
+  /* ---------------- đăng ký / đăng nhập để xem giá ---------------- */
+  const USER_KEY = "gp_user";
+  const getUser = () => { try { const u = JSON.parse(localStorage.getItem(USER_KEY) || "null"); return u && u.phone ? u : null; } catch (e) { return null; } };
+  const setUser = (u) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch (e) {} };
+  let authNext = null;
+  async function authCall(d) {
+    if (!B.leadWebhook) return { ok: true, offline: true };
+    try {
+      const r = await fetch(B.leadWebhook, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign(d, { time: new Date().toISOString(), page: location.href })) });
+      const t = await r.text(); try { return JSON.parse(t); } catch (e) { return { ok: true, offline: true }; }
+    } catch (e) {
+      try { await fetch(B.leadWebhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(Object.assign({}, d, { pass: undefined, note: "Đăng ký xem giá" })) }); } catch (e2) {}
+      return { ok: true, offline: true };
+    }
+  }
+  function authGate(next, tab) {
+    const u = getUser(); if (u) { next && next(u); return; }
+    authNext = next; let el = $("#auth");
+    if (!el) {
+      el = document.createElement("div"); el.id = "auth"; el.className = "auth";
+      el.innerHTML = `<div class="auth-box" role="dialog" aria-modal="true" aria-labelledby="auth-h">
+        <div class="auth-head"><button class="auth-x" type="button" aria-label="Đóng">✕</button><div class="auth-eye">Bảng giá chi tiết</div><h3 id="auth-h">Đăng ký để xem giá từng căn</h3><p>Miễn phí, chưa tới 30 giây. Xem giá gồm VAT, phiếu tính giá, lịch thanh toán và gói vay của từng căn.</p></div>
+        <div class="auth-body"><div class="auth-tabs"><button type="button" data-at="reg" class="on">Đăng ký</button><button type="button" data-at="login">Đăng nhập</button></div>
+        <form id="auth-f" novalidate><label class="auth-l reg-only">Họ và tên<input name="name" autocomplete="name"></label>
+        <label class="auth-l">Số điện thoại<input name="phone" type="tel" inputmode="tel" autocomplete="tel"></label>
+        <label class="auth-l">Mật khẩu<input name="pass" type="password" placeholder="Ít nhất 6 ký tự" autocomplete="current-password"></label>
+        <div class="auth-msg" role="alert"></div>
+        <button class="auth-go" type="submit">Đăng ký và xem giá</button></form>
+        <p class="auth-foot">Quên mật khẩu? Gọi hoặc Zalo <a href="${telUrl}">${esc(B.hotline)}</a> để được hỗ trợ.</p></div></div>`;
+      document.body.appendChild(el);
+      const f = $("#auth-f", el), msg = $(".auth-msg", el), go = $(".auth-go", el);
+      const setTab = (t) => { el.dataset.tab = t; $$("[data-at]", el).forEach((b) => b.classList.toggle("on", b.dataset.at === t)); go.textContent = t === "reg" ? "Đăng ký và xem giá" : "Đăng nhập"; $("[name=pass]", el).autocomplete = t === "reg" ? "new-password" : "current-password"; msg.textContent = ""; };
+      el._setTab = setTab;
+      $$("[data-at]", el).forEach((b) => (b.onclick = () => setTab(b.dataset.at)));
+      const close = () => { el.classList.remove("show"); authNext = null; };
+      $(".auth-x", el).onclick = close; el.addEventListener("click", (e) => { if (e.target === el) close(); });
+      f.onsubmit = async (e) => {
+        e.preventDefault(); if (go.disabled) return;
+        const reg = el.dataset.tab === "reg", d = Object.fromEntries(new FormData(f).entries()), phone = (d.phone || "").replace(/[^\d+]/g, "");
+        if (reg && (d.name || "").trim().length < 2) { msg.textContent = "Vui lòng nhập họ và tên."; return; }
+        if (!/^(\+?84|0)\d{9,10}$/.test(phone)) { msg.textContent = "Số điện thoại chưa đúng (VD: 0912345678)."; return; }
+        if ((d.pass || "").length < 6) { msg.textContent = "Mật khẩu cần ít nhất 6 ký tự."; return; }
+        go.disabled = true; const old = go.textContent; go.textContent = "Đang xử lý…"; msg.textContent = "";
+        const r = await authCall({ action: reg ? "register" : "login", name: (d.name || "").trim(), phone, pass: d.pass, project: "Vinhomes Green Paradise" });
+        go.disabled = false; go.textContent = old;
+        if (!r.ok) { msg.textContent = r.msg || "Chưa đăng nhập được, vui lòng thử lại."; if (r.code === "exists") setTab("login"); return; }
+        const user = { name: r.name || (d.name || "").trim() || "Khách", phone, t: Date.now() }; setUser(user);
+        el.classList.remove("show"); f.reset(); updateAuthUI(); toast(`Chào ${user.name}, bạn đã xem được giá từng căn.`);
+        const n = authNext; authNext = null; n && n(user);
+      };
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.classList.contains("show")) close(); });
+    }
+    el._setTab(tab || "reg"); el.classList.add("show"); setTimeout(() => { const i = $(el.dataset.tab === "reg" ? "[name=name]" : "[name=phone]", el); i && i.focus(); }, 50);
+  }
+  function updateAuthUI() { const u = getUser(); $$("[data-auth-name]").forEach((x) => (x.textContent = u ? u.name : "")); }
+  function toast(t) { let x = $("#toast"); if (!x) { x = document.createElement("div"); x.id = "toast"; x.className = "toast"; document.body.appendChild(x); } x.textContent = t; x.classList.add("show"); clearTimeout(x._t); x._t = setTimeout(() => x.classList.remove("show"), 3500); }
+
   /* ---------------- modal chi tiết căn ---------------- */
   function unitModal(u) {
+    if (!getUser()) { authGate(() => unitModal(u)); return; }
     const p = projBySlug[u.project], st = STATUS[u.status];
     openModal(`<div class="pimg" style="height:160px;border-radius:12px;margin:-4px 0 16px;${bgStyle(projArt(p, 3))}"><span class="badge ${st[1]}">${st[0]}</span></div>
       <div class="eyebrow">${esc(p.name)} · ${esc(u.zone)}</div><h2 style="font-size:28px;margin-bottom:4px">Căn ${esc(u.code)}</h2>
       <div class="price-from" style="font-size:24px">${u.price != null ? fmtTy(u.price) + ` <span class="muted" style="font-size:13px;font-weight:400">gồm VAT</span>` : "Giá: liên hệ để nhận báo giá"}</div>
-      <table class="kv" style="margin:14px 0"><tr><td>Loại hình</td><td>${esc(u.type)}</td></tr><tr><td>Dãy</td><td>${esc(u.block)}${u.street ? " · Trục " + esc(u.street) : ""}</td></tr>${u.total ? `<tr><td>Tổng gồm VAT + KPBT</td><td><b>${fmtVnd(u.total)}</b></td></tr>` : ""}${u.vip ? `<tr><td>Quỹ căn</td><td><b style="color:var(--gold)">★ Quỹ VIP</b></td></tr>` : ""}${u.handover && u.handover !== "—" ? "" : ""}<tr><td>${u.cat === "Căn hộ" ? "DT thông thủy" : "Diện tích đất"}</td><td>${u.land} m²</td></tr>${u.build ? `<tr><td>DT xây dựng</td><td>${u.build} m² · ${u.floors} tầng</td></tr>` : ""}${u.cat === "Căn hộ" ? `<tr><td>Tầng</td><td>${u.floors}</td></tr>` : ""}<tr><td>Hướng</td><td>${esc(u.dir)}</td></tr><tr><td>Bàn giao</td><td>${esc(u.handover)}</td></tr><tr><td>Pháp lý</td><td>${esc(u.legal)}</td></tr>${u.price != null ? `<tr><td>Giá trước VAT</td><td>${fmtTy(u.preVat)}</td></tr><tr><td>Đơn giá</td><td>${nf(u.ppm, 1)} tr/m²</td></tr>` : ""}${u.rent ? `<tr><td>Cam kết thuê</td><td>Có chương trình</td></tr>` : ""}</table>
+      <table class="kv" style="margin:14px 0"><tr><td>Loại hình</td><td>${esc(u.type)}</td></tr><tr><td>Dãy</td><td>${esc(u.block)}${u.street ? " · Trục " + esc(u.street) : ""}</td></tr>${u.total ? `<tr><td>Tổng gồm VAT + KPBT</td><td><b>${fmtVnd(u.total)}</b></td></tr>` : ""}${u.vip ? `<tr><td>Quỹ căn</td><td><b style="color:var(--gold)">★ Quỹ VIP</b></td></tr>` : ""}${u.handover && u.handover !== "—" ? "" : ""}<tr><td>${u.cat === "Căn hộ" ? "DT thông thủy" : "Diện tích đất"}</td><td>${u.land} m²</td></tr>${u.build ? `<tr><td>DT xây dựng</td><td>${u.build} m²${u.floors ? " · " + u.floors + " tầng" : ""}</td></tr>` : ""}${u.cat === "Căn hộ" ? `<tr><td>Tầng</td><td>${u.floors}</td></tr>` : ""}<tr><td>Hướng</td><td>${esc(u.dir)}</td></tr><tr><td>Bàn giao</td><td>${esc(u.handover)}</td></tr><tr><td>Pháp lý</td><td>${esc(u.legal)}</td></tr>${u.price != null ? `<tr><td>Giá trước VAT</td><td>${fmtTy(u.preVat)}</td></tr><tr><td>Đơn giá</td><td>${nf(u.ppm, 1)} tr/m²</td></tr>` : ""}${u.rent ? `<tr><td>Cam kết thuê</td><td>Có chương trình</td></tr>` : ""}</table>
       <div style="display:flex;gap:8px;flex-wrap:wrap">${u.g && window.GPQuote ? `<button class="btn btn-gold" data-phieu="${esc(u.code)}">📄 Phiếu tính giá · Xuất Excel / Ảnh</button>` : ""}<a class="btn btn-green" href="#${p.slug}" data-quote="${esc(u.code)}">Báo giá chi tiết</a><button class="btn btn-ghost fav-btn" data-favtoggle="${esc(u.code)}">${favs.has(u.code) ? "♥ Đã lưu" : "♡ Lưu căn"}</button><button class="btn btn-gold" data-lead data-project="${p.slug}" data-note="Tư vấn căn ${esc(u.code)}">Nhận tư vấn căn này</button></div>
       ${sampleTag(u.project) ? `<p style="margin:12px 0 0">${sampleTag(u.project)}</p>` : ""}`);
   }
@@ -454,6 +512,7 @@
     window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp);
     let selEl = null;
     function showPop(u, px, py) {
+      if (!getUser() && u.price != null) { authGate(() => showPop(u, px, py)); return; }
       if (pop.classList.contains("show") && pop.dataset.code === u.code) return;
       pop.dataset.code = u.code;
       if (selEl) selEl.classList.remove("sel");
