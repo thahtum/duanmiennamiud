@@ -563,7 +563,7 @@
     el.innerHTML = `<div class="ov-stage"><img src="${esc(O.image)}" width="${W}" height="${H}" alt="Tổng mặt bằng ${esc(p.name)}" draggable="false"><div class="ov-tiles"></div><svg class="ov-text" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"></svg></div><div class="ov-pins"></div>
       <div class="mp-ctrl"><button data-z="in" title="Phóng to">+</button><button data-z="out" title="Thu nhỏ">−</button><button data-z="fit" title="Vừa khung">⤢</button><button data-z="fs" title="Toàn màn hình">⛶</button></div>`;
     const stage = $(".ov-stage", el), pins = $(".ov-pins", el), tilesEl = $(".ov-tiles", el), textEl = $(".ov-text", el);
-    let s = 1, tx = 0, ty = 0, minS = 0.1, maxS = O.tiles ? 24 : 6;
+    let s = 1, tx = 0, ty = 0, minS = 0.1, maxS = O.tiles ? 40 : 6;
     /* ô ảnh độ phân giải cao + lớp chữ vector khi phóng to */
     const TL = O.tiles, tileMade = {}, dpr = Math.min(window.devicePixelRatio || 1, 2);
     let textReady = !!window.TMB_TEXT, textLoading = false, grid = null, detailT = 0;
