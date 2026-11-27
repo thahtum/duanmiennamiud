@@ -137,7 +137,7 @@
 
   /* ---------------- khung chung ---------------- */
   function chrome() {
-    $("#brand-name").textContent = B.name; $("#brand-tag").textContent = B.tagline; $("#logo-mark").textContent = "V";
+    $("#brand-name").textContent = B.name; $("#brand-tag").textContent = B.tagline;
     $("#tb-phone").textContent = B.hotline; $("#tb-phone").href = telUrl; const t2 = $("#tb-phone2"); if (B.hotline2) { t2.textContent = B.hotline2; t2.href = "tel:" + B.phone2; } else t2.previousSibling && (t2.previousSibling.textContent = ""), t2.remove(); $("#tb-hours").textContent = "Tư vấn " + B.hours;
     $("#cta-call").href = telUrl; $("#cta-zalo").href = zaloUrl;
     const hasU = (p) => UNITS.some((u) => u.project === p.slug);
@@ -147,7 +147,7 @@
       <div class="dd"><button>Loại hình ▾</button><div class="dd-menu"><a href="#can-ho">Căn hộ chung cư</a><a href="#nha-pho">Nhà phố – Shophouse</a><a href="#biet-thu">Biệt thự</a></div></div>
       <a href="#tin-dang" data-nav="tin-dang">Tin đăng</a><a href="#tin-tuc" data-nav="tin-tuc">Tin tức</a><a href="#lien-he" data-nav="lien-he">Liên hệ</a>`;
     $("#burger").onclick = () => $("#nav").classList.toggle("open");
-    $("#foot-cols").innerHTML = `<div><div class="logo" style="color:#fff;margin-bottom:12px"><span class="logo-mark">V</span>${esc(B.name)}</div><p>${esc(B.disclaimer)}</p></div>
+    $("#foot-cols").innerHTML = `<div><div class="logo" style="color:#fff;margin-bottom:12px"><span class="logo-mark"><img src="img/logo.svg" alt="" width="38" height="38"></span>${esc(B.name)}</div><p>${esc(B.disclaimer)}</p></div>
       <div><h4>Dự án</h4><ul>${S.projects.map((p) => `<li><a href="#${p.slug}">${esc(p.name)}</a></li>`).join("")}</ul></div>
       <div><h4>Chính sách & pháp lý</h4><ul><li><a href="#chinh-sach-bao-mat">Chính sách bảo mật</a></li><li><a href="#chinh-sach-bao-mat">Cookie & quảng cáo</a></li><li><a href="#tin-tuc">Tin tức dự án</a></li><li><a href="#tin-dang">Tất cả tin đăng</a></li></ul></div>
       <div><h4>Liên hệ</h4><ul><li>${esc(B.consultant)}</li><li>Hotline/Zalo: <a href="${telUrl}">${esc(B.hotline)}</a></li>${B.hotline2 ? `<li>Hotline 2: <a href="tel:${B.phone2}">${esc(B.hotline2)}</a></li>` : ""}<li>${esc(B.email)}</li><li>Khu vực: ${esc(B.area)}</li><li>Giờ làm việc: ${esc(B.hours)}</li></ul></div>`;
