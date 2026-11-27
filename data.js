@@ -122,7 +122,7 @@ window.SITE = {
       overview: {
         image: "img/gp-tmb.jpg", width: 3842, height: 2345,
         tiles: { k: 1.5, size: 1024, levels: [{ dir: "img/tmb/m/", z: 3.125, cols: 8, rows: 5, min: 1.1 }, { dir: "img/tmb/h/", z: 6.25, cols: 16, rows: 10, min: 2.2 }, { dir: "img/tmb/x/", z: 12.5, cols: 32, rows: 20, min: 4.4 }, { dir: "img/tmb/u/", z: 25, cols: 63, rows: 39, min: 9 }] },   // ô ảnh nét cao khi phóng to
-        text: "tmb-text.js",                                                        // lớp chữ vector (mã lô, diện tích)
+                                                               // lớp chữ vector (mã lô, diện tích)
         note: "Tổng mặt bằng dự án Vinhomes Green Paradise (nguồn: TMB A0 251001 của chủ đầu tư)",
         // ma trận chuyển tọa độ mặt bằng Phân khu A -> ảnh tổng mặt bằng [a, b, c, d, e, f]: X = a*x + b*y + c, Y = d*x + e*y + f
         M: [0.515423, -0.035354, 922.477, 0.0047, 0.557494, 1212.230],
