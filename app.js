@@ -256,15 +256,6 @@
   function toast(t) { let x = $("#toast"); if (!x) { x = document.createElement("div"); x.id = "toast"; x.className = "toast"; document.body.appendChild(x); } x.textContent = t; x.classList.add("show"); clearTimeout(x._t); x._t = setTimeout(() => x.classList.remove("show"), 3500); }
 
   /* ---------------- modal chi tiết căn ---------------- */
-  window.addEventListener("message", (e) => {
-    if (e.origin !== location.origin || !e.data || e.data.type !== "gp-unit") return;
-    const u = unitByCode[norm(e.data.code)]; if (u) unitModal(u);
-  });
-  function mount3d(p) {
-    const box = $("#m3d"); if (!box || !p.map3d) return;
-    const go = () => { box.innerHTML = `<iframe src="${esc(p.map3d.src)}" title="Bản đồ 3D ${esc(p.map3d.name)}" loading="lazy" allow="fullscreen"></iframe>`; };
-    $("#m3d-go").onclick = go;
-  }
   function unitModal(u) {
     if (!getUser()) { authGate(() => unitModal(u)); return; }
     const p = projBySlug[u.project], st = STATUS[u.status];
@@ -367,7 +358,7 @@
     const units = UNITS.filter((u) => u.project === p.slug);
     const has = units.length > 0;
     const nCon = units.filter((u) => u.status === "con").length;
-    const secs = [p.overview && ["s-tmb", "Tổng mặt bằng"], p.map3d && ["s-3d", "Bản đồ 3D"], has && ["s-matbang", "Mặt bằng quỹ căn"], has && ["s-banghang", "Giỏ hàng"], has && ["s-baogia", "Báo giá"], ["s-vay", "Tính vay"], ["s-tongquan", "Tổng quan"], p.routes.length && ["s-vitri", "Vị trí"], p.zones.length && ["s-phankhu", "Phân khu"], p.products.length && ["s-sanpham", "Sản phẩm"], ["s-hinhanh", "Hình ảnh"], ["s-chinhsach", "Chính sách"], p.amenities.length && ["s-tienich", "Tiện ích"], p.timeline.length && ["s-tiendo", "Tiến độ"], p.faq.length && ["s-hoidap", "Hỏi đáp"], ["s-dangky", "Đăng ký"]].filter(Boolean);
+    const secs = [p.overview && ["s-tmb", "Tổng mặt bằng"], has && ["s-matbang", "Mặt bằng quỹ căn"], has && ["s-banghang", "Giỏ hàng"], has && ["s-baogia", "Báo giá"], ["s-vay", "Tính vay"], ["s-tongquan", "Tổng quan"], p.routes.length && ["s-vitri", "Vị trí"], p.zones.length && ["s-phankhu", "Phân khu"], p.products.length && ["s-sanpham", "Sản phẩm"], ["s-hinhanh", "Hình ảnh"], ["s-chinhsach", "Chính sách"], p.amenities.length && ["s-tienich", "Tiện ích"], p.timeline.length && ["s-tiendo", "Tiến độ"], p.faq.length && ["s-hoidap", "Hỏi đáp"], ["s-dangky", "Đăng ký"]].filter(Boolean);
     $("#app").innerHTML = `
     <section class="p-hero" style="background:linear-gradient(100deg,rgba(8,30,24,.92),rgba(8,30,24,.55)),${p.image ? `url('${p.image}')` : projArt(p)} center/cover"><div class="wrap">
       <div class="crumb"><a href="#trang-chu">Trang chủ</a> / Dự án / ${esc(p.short)}</div>
@@ -379,7 +370,6 @@
     <div class="subnav"><div class="wrap">${secs.map((s) => `<button data-go="${s[0]}">${s[1]}</button>`).join("")}</div></div>
     <div id="psecs">
     ${p.overview ? `<div class="p-sec" id="s-tmb"><div class="wrap"><div class="sec-head"><div><div class="eyebrow">Tổng mặt bằng</div><h2>Tổng mặt bằng & căn đang bán</h2></div><p class="muted">Bấm nhóm căn để phóng to, bấm từng căn để xem chi tiết. Căn <b style="color:#c47f0e">★ quỹ VIP</b> được làm nổi bật.</p></div><div class="ov-legend" id="ov-legend"></div><div class="ov" id="ov"></div><p class="muted" style="font-size:12.5px;margin-top:8px">${esc(p.overview.note || "")}. Vị trí các căn ngoài Phân khu A là vị trí tham khảo theo phân khu.</p></div></div>` : ""}
-    ${p.map3d ? `<div class="p-sec" id="s-3d"><div class="wrap"><div class="sec-head"><div><div class="eyebrow">Mới</div><h2>Bản đồ 3D ${esc(p.map3d.name)}</h2></div><p class="muted">Xoay, nghiêng, phóng to để xem từng dãy nhà. Căn còn hàng tô xanh, bấm vào căn để xem giá. <a href="${esc(p.map3d.src)}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600">Mở toàn màn hình ↗</a></p></div><div class="m3d" id="m3d"><button class="btn btn-gold" id="m3d-go">▶ Xem bản đồ 3D</button></div><p class="muted" style="font-size:12.5px;margin-top:8px">Mô hình khối minh hoạ dựng từ tổng mặt bằng mã căn; chiều cao, hình dáng nhà mang tính tham khảo.</p></div></div>` : ""}
     ${has ? `<div class="p-sec" id="s-matbang"><div class="wrap"><div class="sec-head"><div><div class="eyebrow">Tương tác</div><h2>Mặt bằng quỹ căn</h2></div><p class="muted">Kéo để di chuyển, cuộn / chụm 2 ngón để phóng to. Bấm vào lô để xem giá. ${sampleTag(p.slug)}</p></div>
       <div class="filters"><div class="field"><label>${esc(p.zoneLabel || "Phân khu")}</label><select class="in" id="m-zone"><option value="">Tất cả</option>${p.zoneList.map((z) => `<option>${esc(z)}</option>`).join("")}</select></div><div class="field"><label>Loại hình</label><select class="in" id="m-type"><option value="">Tất cả</option>${p.unitTypes.map((z) => `<option>${esc(z)}</option>`).join("")}</select></div><div class="field"><label>Tìm mã căn</label><input class="in" id="m-code" placeholder="VD: ${esc(units[0].code)}" list="codes-${p.slug}"></div></div>
       ${p.maps && p.maps.length > 1 ? `<div class="seg" id="mp-tabs" style="max-width:640px;margin-bottom:12px">${p.maps.map((m, i) => `<button data-mp="${i}" class="${i ? "" : "on"}">${esc(m.name)} <span class="muted" style="font-weight:400">(${units.filter((u) => u.plan === m.id && u.price != null && u.status !== "ban").length} căn đang bán)</span></button>`).join("")}</div>` : ""}
@@ -417,7 +407,6 @@
       quoteTool($("#quote"), p, units);
     }
     if (p.overview) mountOverview($("#ov"), $("#ov-legend"), p, units);
-    mount3d(p);
     loanTool($("#loan"), p);
     $$("[data-gal]:not([data-zimg])").forEach((g) => (g.onclick = () => openModal(`<div style="height:420px;border-radius:12px;${g.getAttribute("style")}"></div><p class="muted">${esc($("span", g).textContent)}</p>`, true)));
     // subnav highlight
