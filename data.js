@@ -18,7 +18,7 @@ window.SITE = {
     phone2: "0373185292",
     hours: "7h – 22h mỗi ngày",
     area: "TP. Hồ Chí Minh",
-    email: "lienhe@tenmien.vn",
+    email: "tranthanhtam.hcmc@gmail.com",
     leadWebhook: "https://script.google.com/macros/s/AKfycbxzg9J2t0yMdHrAfYZkqNDzP15WWnxU0ZORUenQTPbqFhaBbyRjeElvPT0wJ0vJ00lQ6w/exec",                  // URL nhận form (Google Apps Script / Telegram bot...). Để trống = gửi qua Zalo
     updated: "11/2026",
     disclaimer: "Đây là trang của đơn vị tư vấn độc lập, không phải trang chính thức của chủ đầu tư. Giá và chính sách theo công bố của chủ đầu tư tại từng thời điểm, có thể thay đổi."
