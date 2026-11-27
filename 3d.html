@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Bản đồ 3D – Vịnh Ngọc · Vinhomes Green Paradise</title>
+<link rel="icon" href="img/logo.svg" type="image/svg+xml">
+<style>
+:root{--green:#0f3b2e;--gold:#b8913f;--gold-2:#d9b768}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#dfe9ee;color:#1d2421}
+#c{display:block;width:100%;height:100%;touch-action:none}
+.panel{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.94);border-radius:14px;padding:12px 14px;box-shadow:0 4px 18px rgba(0,0,0,.12);max-width:300px;font-size:13px}
+.panel h1{font-size:15px;margin:0 0 2px;color:var(--green)}
+.panel .sub{color:#6b6b5e;font-size:12px;margin-bottom:8px}
+.lg{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;margin:6px 0 8px}
+.sw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.15)}
+.row{display:flex;gap:6px;margin-top:6px}
+.row input{flex:1;min-width:0;padding:7px 9px;border:1px solid #dcd3bd;border-radius:9px;font-size:13px;text-transform:uppercase}
+button{border:0;border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:600;cursor:pointer;background:#f1ebdd;color:#3d3a30}
+button.on{background:var(--green);color:var(--gold-2)}
+#tip{position:absolute;pointer-events:none;background:rgba(15,59,46,.95);color:#fff;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.45;display:none;white-space:nowrap;transform:translate(12px,12px)}
+#tip b{color:var(--gold-2);font-size:13.5px}
+#load{position:absolute;inset:0;display:grid;place-items:center;background:#dfe9ee;color:var(--green);font-weight:600;font-size:15px}
+.hint{position:absolute;right:12px;bottom:12px;background:rgba(255,255,255,.9);border-radius:10px;padding:6px 10px;font-size:12px;color:#55534a}
+@media (max-width:600px){.panel{max-width:calc(100% - 24px);padding:10px 12px}.lg{grid-template-columns:auto 1fr auto 1fr}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="panel">
+  <h1>Bản đồ 3D · Vịnh Ngọc</h1>
+  <div class="sub">Vinhomes Green Paradise Cần Giờ · mô hình khối minh hoạ</div>
+  <div class="lg">
+    <span class="sw" style="background:#2e9b5f"></span><span>Còn hàng (<b id="n-con">0</b>)</span>
+    <span class="sw" style="background:#e0a526"></span><span>Quỹ VIP</span>
+    <span class="sw" style="background:#8e7cc3"></span><span>Đang lock</span>
+    <span class="sw" style="background:#c94a4a"></span><span>Đã bán</span>
+    <span class="sw" style="background:#f4efe3"></span><span>Chưa có trong giỏ hàng</span>
+  </div>
+  <div class="row"><input id="q" placeholder="Tìm mã căn, VD VN83-10" autocomplete="off"><button id="go">Tìm</button></div>
+  <div class="row"><button id="only">Chỉ căn còn hàng</button><button id="reset">Toàn cảnh</button></div>
+</div>
+<div id="tip"></div>
+<div class="hint">Kéo để di chuyển · chuột phải / 2 ngón để xoay, nghiêng · cuộn để phóng to</div>
+<div id="load">Đang dựng mô hình 3D…</div>
+<script src="vn3d.js"></script>
+<script src="gio-hang-cangio.js"></script>
+<script type="module">
+import * as THREE from "./lib/three/three3d.min.js";
+const { MapControls, mergeGeometries } = THREE;
+
+const IW = 3616, IH = 2424, S = 0.72;   // 0,72 m / điểm ảnh (đo từ diện tích lô)
+const W = IW * S, H = IH * S;
+const X = (px) => (px - IW / 2) * S, Z = (py) => (py - IH / 2) * S;
+const HT = { "Liền kề": 15, "Song lập": 12.5, "Đơn lập": 11.5 };
+const COL = { con: 0x2e9b5f, vip: 0xe0a526, lock: 0x8e7cc3, lockdeal: 0x8e7cc3, ban: 0xc94a4a, none: 0xf4efe3 };
+const rows = (window.GP_SHEET && window.GP_SHEET.rows) || {};
+const units = (window.VN3D || []).filter((u) => u[3] && u[3].length >= 6);
+const fmtTy = (v) => (v / 1e9).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " tỷ";
+const user = (() => { try { return JSON.parse(localStorage.getItem("gp_user") || "null"); } catch (e) { return null; } })();
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const mobile = matchMedia("(max-width:700px)").matches;
+renderer.shadowMap.enabled = !mobile; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xdfe9ee);
+scene.fog = new THREE.Fog(0xdfe9ee, 2500, 5200);
+const camera = new THREE.PerspectiveCamera(42, 1, 2, 12000);
+const controls = new MapControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08; controls.maxPolarAngle = 1.35; controls.minDistance = 25; controls.maxDistance = 3800; controls.screenSpacePanning = false;
+const HOME = { pos: new THREE.Vector3(150, 1500, 1350), tgt: new THREE.Vector3(150, 0, -80) };
+camera.position.copy(HOME.pos); controls.target.copy(HOME.tgt);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb9c4b0, 1.6));
+const sun = new THREE.DirectionalLight(0xfff3dc, 2.2);
+sun.position.set(-900, 1400, 700); sun.castShadow = !mobile;
+Object.assign(sun.shadow.camera, { left: -W / 2, right: W / 2, top: H / 2, bottom: -H / 2, near: 100, far: 4000 });
+sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+// mặt đất: ảnh mặt bằng Vịnh Ngọc (máy tính: 4 ảnh nét gấp đôi; điện thoại: 1 ảnh)
+const loader = new THREE.TextureLoader(), aniso = renderer.capabilities.getMaxAnisotropy();
+const parts = mobile || renderer.capabilities.maxTextureSize < 4096 ? [["img/3d/vn_8.jpg", 0, 0, 1]] : [["img/3d/vn16_0_0.jpg", 0, 0, 2], ["img/3d/vn16_1_0.jpg", 1, 0, 2], ["img/3d/vn16_0_1.jpg", 0, 1, 2], ["img/3d/vn16_1_1.jpg", 1, 1, 2]];
+let loaded = 0;
+parts.forEach(([src, i, j, n]) => {
+  const t = loader.load(src, () => { if (++loaded === parts.length) document.getElementById("load").style.display = "none"; });
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(W / n, H / n), new THREE.MeshLambertMaterial({ map: t }));
+  m.rotation.x = -Math.PI / 2; m.position.set(-W / 2 + (i + 0.5) * W / n, 0, -H / 2 + (j + 0.5) * H / n); m.receiveShadow = true; scene.add(m);
+});
+const sea = new THREE.Mesh(new THREE.PlaneGeometry(14000, 14000), new THREE.MeshLambertMaterial({ color: 0x7fb6d6 }));
+sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
+
+// khối nhà theo từng lô
+const geos = [], ranges = [], info = [];
+let nCon = 0, start = 0;
+units.forEach((u) => {
+  const p = u[3], n = p.length / 2;
+  let cx = 0, cy = 0; for (let i = 0; i < n; i++) { cx += p[2 * i]; cy += p[2 * i + 1]; } cx /= n; cy /= n;
+  const k = 0.82, pts = [];
+  for (let i = 0; i < n; i++) pts.push(new THREE.Vector2(X(cx + (p[2 * i] - cx) * k), -Z(cy + (p[2 * i + 1] - cy) * k)));
+  if (THREE.ShapeUtils.isClockWise(pts)) pts.reverse();
+  const r = rows[u[0]] || null;
+  const st = r ? (r.vip && r.status === "con" ? "vip" : r.status) : "none";
+  if (r && r.status === "con") nCon++;
+  const h = (HT[u[1]] || 12) * (r ? 1.08 : 1);
+  const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: h, bevelEnabled: false });
+  g.rotateX(-Math.PI / 2);
+  const c = new THREE.Color(COL[st] || COL.none), cnt = g.attributes.position.count, arr = new Float32Array(cnt * 3);
+  const pos = g.attributes.position.array;
+  for (let i = 0; i < cnt; i++) { const top = pos[3 * i + 1] > h - 0.01, f = top ? 1 : 0.86; arr[3 * i] = c.r * f; arr[3 * i + 1] = c.g * f; arr[3 * i + 2] = c.b * f; }
+  g.setAttribute("color", new THREE.BufferAttribute(arr, 3));
+  geos.push(g); ranges.push([start, cnt]); start += cnt;
+  info.push({ code: u[0], type: u[1], land: u[2] || (r && r.land) || null, row: r, st, x: X(cx), z: Z(cy), h });
+});
+document.getElementById("n-con").textContent = nCon;
+const merged = mergeGeometries(geos, false);
+geos.forEach((g) => g.dispose());
+const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+const blocks = new THREE.Mesh(merged, mat);
+blocks.castShadow = blocks.receiveShadow = !mobile; scene.add(blocks);
+const colors = merged.attributes.color, base = colors.array.slice();
+const triLot = new Int32Array(start / 3);
+ranges.forEach(([s0, c0], i) => triLot.fill(i, s0 / 3, (s0 + c0) / 3));
+
+// tô sáng / lọc
+let hover = -1, sel = -1, onlyCon = false;
+function paint(i, hex) {
+  const [s0, c0] = ranges[i], a = colors.array;
+  if (hex == null) { a.set(base.subarray(s0 * 3, (s0 + c0) * 3), s0 * 3); }
+  else { const c = new THREE.Color(hex); for (let v = s0; v < s0 + c0; v++) { a[3 * v] = c.r; a[3 * v + 1] = c.g; a[3 * v + 2] = c.b; } }
+  colors.needsUpdate = true;
+}
+function applyFilter() {
+  const a = colors.array, dim = new THREE.Color(0xe6e2d8);
+  info.forEach((it, i) => {
+    const [s0, c0] = ranges[i];
+    if (onlyCon && it.st === "none") for (let v = s0; v < s0 + c0; v++) { a[3 * v] = dim.r; a[3 * v + 1] = dim.g; a[3 * v + 2] = dim.b; }
+    else a.set(base.subarray(s0 * 3, (s0 + c0) * 3), s0 * 3);
+  });
+  colors.needsUpdate = true; if (sel >= 0) paint(sel, 0xffd34d);
+}
+
+// tooltip + bấm chọn
+const ray = new THREE.Raycaster(), m2 = new THREE.Vector2(), tip = document.getElementById("tip");
+function pick(e) {
+  const r = canvas.getBoundingClientRect(); m2.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(m2, camera); const hit = ray.intersectObject(blocks)[0];
+  return hit ? triLot[hit.faceIndex] : -1;
+}
+function tipHtml(it) {
+  const r = it.row, st = { con: "Còn hàng", vip: "Còn hàng · Quỹ VIP", lock: "Đang lock", lockdeal: "Lock deal", ban: "Đã bán", none: "Chưa có trong giỏ hàng" }[it.st];
+  const price = r && r.total ? (user ? fmtTy(r.total) + " (gồm VAT + KPBT)" : "Bấm để đăng ký xem giá") : "";
+  return `<b>${it.code}</b> · ${it.type}<br>${it.land ? "Đất " + String(it.land).replace(".", ",") + " m² · " : ""}${st}${price ? "<br>" + price : ""}`;
+}
+canvas.addEventListener("pointermove", (e) => {
+  if (e.buttons) { tip.style.display = "none"; return; }
+  const i = pick(e);
+  if (i !== hover) { if (hover >= 0 && hover !== sel) { onlyCon && info[hover].st === "none" ? applyFilter() : paint(hover, null); } hover = i; if (i >= 0 && i !== sel) paint(i, 0xfff1a8); }
+  if (i >= 0) { tip.innerHTML = tipHtml(info[i]); tip.style.display = "block"; tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; canvas.style.cursor = "pointer"; }
+  else { tip.style.display = "none"; canvas.style.cursor = ""; }
+});
+let down = null;
+canvas.addEventListener("pointerdown", (e) => (down = [e.clientX, e.clientY]));
+canvas.addEventListener("pointerup", (e) => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const i = pick(e); if (i < 0) return;
+  select(i, false);
+  const it = info[i];
+  if (parent !== window && it.row) parent.postMessage({ type: "gp-unit", code: it.code }, location.origin);
+  else { tip.innerHTML = tipHtml(it); tip.style.display = "block"; tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; }
+});
+function select(i, fly) {
+  if (sel >= 0) paint(sel, null); sel = i; paint(i, 0xffd34d);
+  if (fly) {
+    const it = info[i], t = new THREE.Vector3(it.x, 0, it.z);
+    const off = new THREE.Vector3(60, 110, 140); flyTo(t.clone().add(off), t);
+  }
+}
+let anim = null;
+function flyTo(pos, tgt) { anim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: tgt, s: performance.now() }; }
+
+// tìm mã căn
+const norm = (s) => s.toUpperCase().replace(/\s+/g, "").replace(/–|—/g, "-");
+function find() {
+  const q = norm(document.getElementById("q").value); if (!q) return;
+  const i = info.findIndex((it) => norm(it.code) === q);
+  if (i < 0) { document.getElementById("q").style.borderColor = "#c62828"; return; }
+  document.getElementById("q").style.borderColor = ""; select(i, true);
+}
+document.getElementById("go").onclick = find;
+document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") find(); });
+document.getElementById("only").onclick = (e) => { onlyCon = !onlyCon; e.target.classList.toggle("on", onlyCon); applyFilter(); };
+document.getElementById("reset").onclick = () => flyTo(HOME.pos.clone(), HOME.tgt.clone());
+const qs = new URLSearchParams(location.search).get("can"); if (qs) { document.getElementById("q").value = qs; setTimeout(find, 300); }
+
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+renderer.setAnimationLoop((t) => {
+  if (anim) { const k = Math.min(1, (t - anim.s) / 1200), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    camera.position.lerpVectors(anim.p0, anim.p1, e); controls.target.lerpVectors(anim.t0, anim.t1, e); if (k >= 1) anim = null; }
+  controls.update(); renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

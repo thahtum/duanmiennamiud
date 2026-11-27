@@ -119,6 +119,7 @@ window.SITE = {
       ],
       timeline: [["19/04/2025", "Khởi công dự án"], ["12/2026", "Hoàn thành san lấp, bàn giao lô đầu tiên"], ["2027", "Hoàn thiện nhà phố các đợt tiếp theo, khai trương tiện ích lớn"], ["2028", "Hoàn thành trường học, khách sạn, các cây cầu nội khu"]],
       faq: [["Đi từ trung tâm mất bao lâu?", "Hiện tại qua phà Bình Khánh khoảng 1h30–2h. Khi cầu Cần Giờ và đại lộ Rừng Sác hoàn thành, từ Quận 1 khoảng 45 phút; tuyến đường sắt tốc độ cao từ ga Bến Thành khoảng 13 phút."], ["Phân khu A có những loại sản phẩm nào?", "1.478 nhà liền kề (70–224 m²), 797 biệt thự song lập (157–452,5 m²) và 239 biệt thự đơn lập (259,5–725 m²)."], ["Sở hữu lâu dài không?", "Người Việt Nam sở hữu lâu dài; người nước ngoài tối đa 50 năm theo luật."], ["Giá bao nhiêu?", "Tham khảo từ 12,95 tỷ (gồm VAT), tùy vị trí, diện tích và chính sách từng đợt. Gửi mã căn để nhận báo giá chính xác."]],
+      map3d: { name: "Vịnh Ngọc", src: "3d.html" },
       overview: {
         image: "img/gp-tmb.jpg", width: 3842, height: 2345,
         tiles: { k: 1.5, size: 1024, levels: [{ dir: "img/tmb/m/", z: 3.125, cols: 8, rows: 5, min: 1.1 }, { dir: "img/tmb/h/", z: 6.25, cols: 16, rows: 10, min: 2.2 }, { dir: "img/tmb/x/", z: 12.5, cols: 32, rows: 20, min: 4.4 }, { dir: "img/tmb/u/", z: 25, cols: 63, rows: 39, min: 9 }, { dir: "img/tmb/s/", z: 50, cols: 126, rows: 77, min: 18 }] },   // ô ảnh nét cao khi phóng to
