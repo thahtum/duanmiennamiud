@@ -68,15 +68,15 @@ window.SITE = {
       slug: "green-paradise", name: "Vinhomes Green Paradise", short: "Green Paradise",
       location: "Cần Giờ, TP.HCM", area: "2.870 ha", status: "Đang mở bán",
       types: ["Nhà phố", "Biệt thự"], priceFrom: 12.95, color: ["#0e5a5a", "#4fb3a3"],
-      summary: "Siêu đô thị biển Cần Giờ với quần thể nghỉ dưỡng, golf, Paradise Lagoon và hệ thống trường – viện – thương mại. Phân khu A – Vịnh Tiên (The Haven Bay) đang mở bán với 2.517 lô liền kề, song lập, đơn lập.",
+      summary: "Siêu đô thị biển Cần Giờ với quần thể nghỉ dưỡng, golf, Paradise Lagoon và hệ thống trường – viện – thương mại. Hai phân khu Vịnh Tiên (The Haven Bay) và Vịnh Ngọc (The Green Bay) đang mở bán với các lô liền kề, song lập, đơn lập.",
       stats: [["2.870 ha", "Quy mô toàn dự án"], ["2.517 lô", "Phân khu A – Vịnh Tiên"], ["70 – 725 m²", "Diện tích đất"], ["~800 ha", "Paradise Lagoon"]],
       info: [["Tên thương mại", "Vinhomes Green Paradise Cần Giờ"], ["Chủ đầu tư", "CTCP Vinhomes (Vingroup)"], ["Vị trí", "Xã Long Hòa & TT Cần Thạnh, Cần Giờ, TP.HCM"], ["Phân khu đang mở bán", "Phân khu A – The Haven Bay (Vịnh Tiên)"], ["Sản phẩm Phân khu A", "1.478 liền kề · 797 song lập · 239 đơn lập"], ["Trục đường chính", "Đại lộ Thời Đại 120m · Đường Tương Lai 50m · Đường Sóng Xanh 26m"], ["Pháp lý", "Theo hồ sơ chủ đầu tư công bố"], ["Khởi công", "19/04/2025"]],
       routes: [["Quận 1 (đường bộ, khi cầu Cần Giờ hoàn thành)", "~45 phút"], ["Ga Bến Thành – đường sắt tốc độ cao Bến Thành – Cần Giờ (tương lai)", "~13 phút"], ["Vũng Tàu – tuyến Cần Giờ – Vũng Tàu (tương lai)", "~10 phút"], ["Sân bay Long Thành", "Qua cầu Phước Khánh & cao tốc Bến Lức – Long Thành"], ["Hiện tại qua phà Bình Khánh", "1h30 – 2h"]],
       image: "img/gp/pc-bview.jpg", thumb: "img/gp/pc-bview-m.jpg",
       locationImage: "img/gp/vi-tri.jpg", locationImage2: "img/gp-ha-tang.jpg",
       zones: [
-        { code: "A", name: "Vịnh Tiên – The Haven Bay", desc: "Phân khu mở bán đầu tiên: 2.517 lô thấp tầng ven vịnh, kề công viên trung tâm và bãi biển.", status: "Đang mở bán" },
-        { code: "B", name: "Vịnh Ngọc – The Green Bay", desc: "Phân khu để ở mật độ thấp, Vincom – Vinmec – Vinschool.", status: "Sắp ra mắt" },
+        { code: "A", name: "Vịnh Tiên – The Haven Bay", desc: "Đang mở bán: 771,1 ha, 2.517 lô thấp tầng ven vịnh, kề sân golf, công viên trung tâm và bãi biển.", status: "Đang mở bán" },
+        { code: "B", name: "Vịnh Ngọc – The Green Bay", desc: "Đang mở bán: 586,9 ha, hơn 3.000 lô liền kề, song lập, đơn lập ven vịnh; kề Vincom, Vinmec, trường học.", status: "Đang mở bán" },
         { code: "C", name: "Mũi Danh Vọng – The Paradise", desc: "Trung tâm kinh tế, tháp biểu tượng, khách sạn.", status: "Sắp ra mắt" },
         { code: "D", name: "Đảo Mặt Trời – The Grand Island", desc: "Lễ hội biển, Paradise Lagoon, nghỉ dưỡng.", status: "Sắp ra mắt" }
       ],
